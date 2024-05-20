@@ -10,34 +10,34 @@ API_KEY = os.getenv('REAL_ESTATE_API_KEY')
 
 app = Flask(__name__)
 
+def fetch_api_data(endpoint, headers):
+    response = requests.get(endpoint, headers=headers)
+    if response.status_code == 200:
+        return True, response.json()
+    return False, {}
+
 @app.route('/fetch_property_data', methods=['GET'])
 def get_property_data():
-    property_identifier = request.args.get('property_id')
-    
-    if not property_identifier:
+    property_id = request.args.get('property_id')
+    if not property_id:
         return jsonify({'error': 'Property ID is required.'}), 400
 
-    auth_headers = {"Authorization": f"Bearer {API_KEY}"}
-    api_response = requests.get(f"{API_URL}/{property_identifier}", headers=auth_headers)
-    
-    if api_response.status_code == 200:
-        property_info = api_response.json()
-        return jsonify(property_info)
+    success, data = fetch_api_data(f"{API_URL}/{property_id}", {"Authorization": f"Bearer {API_KEY}"})
+    if success:
+        return jsonify(data)
     else:
-        return jsonify({'error': 'Failed to fetch property data'}), api_response.status_code
+        return jsonify({'error': 'Failed to fetch property data'}), 400
 
 @app.route('/property_analytics', methods=['POST'])
 def analyze_property():
-    analysis_request_data = request.get_json()
-    analysis_type = analysis_request_data.get('analytics_type')
-    analysis_parameters = analysis_request_data.get('parameters')
+    content = request.get_json()
+    analytics_type = content.get('analytics_type')
+    parameters = content.get('parameters')
 
-    if analysis_type == 'price_trends':
-        analysis_result = {'message': 'Simulated price trend analysis result', 'parameters': analysis_parameters}
+    if analytics_type == 'price_trends':
+        return jsonify({'message': 'Simulated price trend analysis result', 'parameters': parameters})
     else:
-        analysis_result = {'error': 'Unsupported analytics type'}
-
-    return jsonify(analysis_result)
+        return jsonify({'error': 'Unsupported analytics type'})
 
 if __name__ == '__main__':
     app.run(debug=True)
