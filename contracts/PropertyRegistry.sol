@@ -38,22 +38,14 @@ contract RealEstateRegistry {
         admin = msg.sender; // Setting the deployer as the admin.
     }
 
-    event PropertyRegistered(uint256 indexed propertyId, address indexed owner);
-    event OwnershipTransferred(
-        uint256 indexed propertyId,
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event PropertyListedForSale(uint256 indexed propertyId, uint256 salePrice);
-    event PropertySaleCancelled(uint256 indexed propertyId);
-    event PropertyUpdated(uint256 indexed propertyId, uint256 value, string description);
-    event PropertyPurchased(uint256 indexed propertyId, address indexed buyer, uint256 salePrice);
-    event PropertyLeased(uint256 indexed propertyId, address indexed lessee, uint256 durationMonths);
-    
-    function toggleContractActive() external onlyAdmin {
-        stopped = !stopped;
-    }
+    // Existing events here.
 
+    // Example of an additional detailed log event for monitoring purposes.
+    event DetailedLog(string message, address indexed by, uint256 timestamp);
+
+    // All your existing functions here.
+
+    // Example use of DetailedLog event
     function leaseProperty(uint256 _propertyId, uint256 _leaseDurationMonths, uint256 _leasePricePerMonth) external stopInEmergency {
         Property storage prop = properties[_propertyId];
         require(msg.sender == prop.owner, "Only the property owner can lease the property.");
@@ -63,6 +55,13 @@ contract RealEstateRegistry {
         prop.leasePricePerMonth = _leasePricePerMonth;
         prop.leaseDurationMonths = _leaseDurationMonths;
 
+        // Emitting a standard event
         emit PropertyLeased(_propertyId, msg.sender, _leaseDurationMonths);
+
+        // Emitting a new detailed log event for enhanced observability.
+        emit DetailedLog("Property leased", msg.sender, block.timestamp);
     }
+    
+    // You could add such detailed logging to other functions where you see fit,
+    // following the same pattern.
 }
