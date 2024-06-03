@@ -5,7 +5,7 @@ interface Property {
   name: string;
   location: string;
   price: number;
-  type: string;
+type: string;
   description: string;
 }
 
@@ -18,42 +18,54 @@ interface Filter {
 }
 
 const fetchProperties = async (): Promise<Property[]> => {
-  return [
-    {
-      id: "1",
-      name: "Ocean View Villa",
-      location: "Miami",
-      price: 500000,
-      type: "Villa",
-      description: "Luxurious villa with an ocean view in Miami",
-    },
-    {
-      id: "2",
-      name: "City Center Apartment",
-      location: "New York",
-      price: 750000,
-      type: "Apartment",
-      description: "Modern apartment in the heart of New York City",
-    },
-    {
-      id: "3",
-      name: "Suburban House",
-      location: "San Francisco",
-      price: 850000,
-      type: "House",
-      description: "Spacious house with a backyard in a quiet suburb",
-    },
-  ];
+  try {
+    // Simulate an API call
+    return [
+      {
+        id: "1",
+        name: "Ocean View Villa",
+        location: "Miami",
+        price: 500000,
+        type: "Villa",
+        description: "Luxurious villa with ocean view in Miami",
+      },
+      {
+        id: "2",
+        name: "City Center Apartment",
+        location: "New York",
+        price: 750000,
+        type: "Apartment",
+        description: "Modern apartment in the heart of New York City",
+      },
+      {
+        id: "3",
+        name: "Suburban House",
+        location: "San Francisco",
+        price: 850000,
+        type: "House",
+        description: "Spacious house with a backyard in quiet suburb",
+      },
+    ];
+  } catch (error) {
+    console.error("Failed to fetch properties:", error);
+    return []; // Return an empty array as a fallback
+  }
 };
 
 const PropertyList: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filters, setFilters] = useState<Filter>({ location: '', minPrice: 0, maxPrice: 1000000, type: '', sortByPrice: ''});
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getProperties = async () => {
-      const fetchedProperties = await fetchProperties();
-      setProperties(fetchedProperties);
+      try {
+        const fetchedProperties = await fetchProperties();
+        setProperties(fetchedProperties);
+      } catch (error) {
+        setError("Unable to load properties."); // Set error message
+        console.error(error);
+      }
     };
 
     getProperties();
@@ -87,6 +99,7 @@ const PropertyList: React.FC = () => {
   return (
     <div>
       <h2>Properties</h2>
+      {error ? <p>Error: {error}</p> : null}
       <div>
         <input
           type="text"
@@ -113,7 +126,7 @@ const PropertyList: React.FC = () => {
           <option value="">All Types</option>
           <option value="Villa">Villa</option>
           <option value="Apartment">Apartment</option>
-          <option value="House">House</option> {/* Added House option for diversity */}
+          <option value="House">House</option>
         </select>
         <select name="sortByPrice" value={filters.sortByPrice} onChange={handleFilterChange}>
           <option value="">Sort by Price</option>
