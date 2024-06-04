@@ -5,21 +5,20 @@ interface Property {
   name: string;
   location: string;
   price: number;
-type: string;
+  type: string;
   description: string;
 }
 
-interface Filter {
+interface PropertyFilterCriteria {
   location: string;
   minPrice: number;
   maxPrice: number;
   type: string;
-  sortByPrice: string; // Added for sorting by price
+  priceSortDirection: string;
 }
 
-const fetchProperties = async (): Promise<Property[]> => {
+const retrieveProperties = async (): Promise<Property[]> => {
   try {
-    // Simulate an API call
     return [
       {
         id: "1",
@@ -43,92 +42,92 @@ const fetchProperties = async (): Promise<Property[]> => {
         location: "San Francisco",
         price: 850000,
         type: "House",
-        description: "Spacious house with a backyard in quiet suburb",
+        description: "Spacious house with a backyard in a quiet suburb",
       },
     ];
   } catch (error) {
-    console.error("Failed to fetch properties:", error);
-    return []; // Return an empty array as a fallback
+    console.error("Failed to retrieve properties:", error);
+    return [];
   }
 };
 
-const PropertyList: React.FC = () => {
+const PropertyCatalog: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filters, setFilters] = useState<Filter>({ location: '', minPrice: 0, maxPrice: 1000000, type: '', sortByPrice: ''});
-  const [error, setError] = useState<string | null>(null);
+  const [propertyFilters, setPropertyFilters] = useState<PropertyFilterCriteria>({ location: '', minPrice: 0, maxPrice: 1000000, type: '', priceSortDirection: ''});
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
-    const getProperties = async () => {
+    const fetchAndSetProperties = async () => {
       try {
-        const fetchedProperties = await fetchProperties();
+        const fetchedProperties = await retrieveProperties();
         setProperties(fetchedProperties);
       } catch (error) {
-        setError("Unable to load properties."); // Set error message
+        setLoadingError("Unable to load properties.");
         console.error(error);
       }
     };
 
-    getProperties();
+    fetchAndSetProperties();
   }, []);
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters({...filters, [name]: value});
+    setPropertyFilters({...propertyFilters, [name]: value});
   };
 
-  const applyFilters = (property: Property) => {
+  const filterProperties = (property: Property) => {
     return (
-      (filters.location ? property.location === filters.location : true) &&
-      property.price >= filters.minPrice &&
-      property.price <= filters.maxPrice &&
-      (filters.type ? property.type === filters.type : true)
+      (propertyFilters.location ? property.location === propertyFilters.location : true) &&
+      property.price >= propertyFilters.minPrice &&
+      property.price <= propertyFilters.maxPrice &&
+      (propertyFilters.type ? property.type === propertyFilters.type : true)
     );
   };
 
-  const sortProperties = (a: Property, b: Property) => {
-    if (filters.sortByPrice === 'asc') {
+  const sortPropertiesByPrice = (a: Property, b: Property) => {
+    if (propertyFilters.priceSortDirection === 'asc') {
       return a.price - b.price;
-    } else if (filters.sortByPrice === 'desc') {
+    } else if (propertyFilters.priceSortDirection === 'desc') {
       return b.price - a.price;
     }
     return 0;
   };
 
-  const filteredAndSortedProperties = properties.filter(applyFilters).sort(sortProperties);
+  const filteredAndSortedProperties = properties.filter(filterProperties).sort(sortPropertiesByPrice);
 
   return (
     <div>
-      <h2>Properties</h2>
-      {error ? <p>Error: {error}</p> : null}
+      <h2>Property Listings</h2>
+      {loadingError ? <p>Error: {loadingError}</p> : null}
       <div>
         <input
           type="text"
           placeholder="Location"
           name="location"
-          value={filters.location}
-          onChange={handleFilterChange}
+          value={propertyFilters.location}
+          onChange={onFilterChange}
         />
         <input
           type="number"
           placeholder="Min Price"
           name="minPrice"
-          value={filters.minPrice.toString()}
-          onChange={handleFilterChange}
+          value={propertyFilters.minPrice.toString()}
+          onChange={onFilterChange}
         />
         <input
           type="number"
           placeholder="Max Price"
           name="maxPrice"
-          value={filters.maxPrice.toString()}
-          onChange={handleFilterChange}
+          value={propertyFilters.maxPrice.toString()}
+          onChange={onFilterChange}
         />
-        <select name="type" value={filters.type} onChange={handleFilterChange}>
+        <select name="type" value={propertyFilters.type} onChange={onFilterChange}>
           <option value="">All Types</option>
           <option value="Villa">Villa</option>
           <option value="Apartment">Apartment</option>
           <option value="House">House</option>
         </select>
-        <select name="sortByPrice" value={filters.sortByPrice} onChange={handleFilterChange}>
+        <select name="priceSortDirection" value={propertyFilters.priceSortDirection} onChange={onFilterChange}>
           <option value="">Sort by Price</option>
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
@@ -136,21 +135,21 @@ const PropertyList: React.FC = () => {
       </div>
       {filteredAndSortedProperties.length > 0 ? (
         <ul>
-          {filteredAndSortedProperties.map((property) => (
-            <li key={property.id}>
-              <h3>{property.name}</h3>
-              <p>{property.description}</p>
+          {filteredAndSortedProperties.map((listedProperty) => (
+            <li key={listedProperty.id}>
+              <h3>{listedProperty.name}</h3>
+              <p>{listedProperty.description}</p>
               <p>
-                Location: {property.location} | Price: ${property.price} | Type: {property.type}
+                Location: {listedProperty.location} | Price: ${listedProperty.price} | Type: {listedValue.type}
               </p>
             </li>
           ))}
         </ul>
       ) : (
-        <p>No properties found.</p>
+        <p>No properties found matching the criteria.</p>
       )}
     </div>
   );
 };
 
-export default PropertyList;
+export default PropertyCatalog;
