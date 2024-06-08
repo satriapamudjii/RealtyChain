@@ -8,80 +8,78 @@ const INFURA_URL = process.env.REACT_APP_INFURA_URL;
 
 interface Property {
   id: string;
-  address: string;
-  owner: string;
-  price: string;
+  location: string;
+  ownerWalletAddress: string;
+  priceInEther: string;
 }
 
 export function usePropertyRegistry() {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [web3, setWeb3] = useState<Web3 | null>(null);
-  const [contract, setContract] = useState<any>(null); // Consider typing this more strictly if possible
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [propertyList, setPropertyList] = useState<Property[]>([]);
+  const [web3Instance, setWeb3Instance] = useState<Web3 | null>(null);
+  const [propertyRegistryContract, setPropertyRegistryContract] = useState<any>(null);
+  const [isFetchingProperties, setIsFetchingProperties] = useState<boolean>(false);
 
   useEffect(() => {
     try {
-      const web3Instance = new Web3(new Web3.providers.HttpProvider(INFURA_URL!));
-      setWeb3(web3Instance);
-      const propertyContract = new web3Instance.eth.Contract(PropertyRegistryABI as AbiItem[], CONTRACT_ADDRESS);
-      setContract(propertyContract);
-      // Example of setting up a contract event listener (adjust for your actual event names and data)
-      // propertyContract.events.PropertyListed({}).on('data', (event) => console.log(event)).on('error', console.error);
+      const web3 = new Web3(new Web3.providers.HttpProvider(INFURA_URL!));
+      setWeb3Instance(web3);
+      const contractInstance = new web3.eth.Contract(PropertyRegistryABI as AbiItem[], CONTRACT_ADDRESS);
+      setPropertyRegistryContract(contractInstance);
     } catch (error) {
       console.error("Web3 Initialization Error:", error);
     }
   }, []);
 
   useEffect(() => {
-    if (web3 && contract) {
-      fetchProperties();
+    if (web3Instance && propertyRegistryContract) {
+      loadPropertiesFromContract();
     }
-  }, [web3, contract]);
+  }, [web3Instance, propertyRegistryContract]);
 
-  const fetchProperties = async () => {
-    setIsLoading(true);
+  const loadPropertiesFromContract = async () => {
+    setIsFetchingProperties(true);
     try {
-      const propertiesCount = await contract.methods.getPropertiesCount().call();
+      const totalProperties = await propertyRegistryContract.methods.getPropertiesCount().call();
       const properties: Property[] = [];
-      for (let i = 0; i < propertiesCount; i++) {
-        const property = await contract.methods.properties(i).call();
+      for (let i = 0; i < totalProperties; i++) {
+        const propertyDetail = await propertyRegistryContract.methods.properties(i).call();
         properties.push({
-          id: property.id,
-          address: property.location,
-          owner: property.owner,
-          price: web3.utils.fromWei(property.price, 'ether'),
+          id: propertyDetail.id,
+          location: propertyDetail.location,
+          ownerWalletAddress: propertyDetail.owner,
+          priceInEther: web3Instance.utils.fromWei(propertyDetail.price, 'ether'),
         });
       }
 
-      setProperties(properties);
+      setPropertyList(properties);
     } catch (error) {
-      console.error("Failed to fetch properties:", error);
+      console.error("Failed to load properties:", error);
     }
-    setIsLoading(false);
+    setIsFetchingProperties(false);
   };
 
-  const submitListing = async (address: string, price: string, account: string) => {
-    setIsLoading(true);
+  const addPropertyListing = async (propertyLocation: string, requestedPrice: string, userWalletAddress: string) => {
+    setIsFetchingProperties(true);
     try {
-      const priceInWei = web3.utils.toWei(price, 'ether');
-      await contract.methods.submitListing(address, priceInWei).send({ from: account });
-      await fetchProperties();
+      const priceInWei = web3Instance.utils.toWei(requestedPrice, 'ether');
+      await propertyRegistryContract.methods.submitListing(propertyLocation, priceInWei).send({ from: userWalletId });
+      await loadPropertiesFromContract();
     } catch (error) {
-      console.error("Failed to submit listing:", error);
+      console.error("Failed to add property listing:", error);
     }
-    setIsLoading(false);
+    setIsFetchingProperties(false);
   };
 
-  const transferOwnership = async (propertyId: string, newOwner: string, account: string) => {
-    setIsLoading(true);
+  const changePropertyOwnership = async (propertyId: string, newOwnerWalletAddress: string, currentOwnerWalletAddress: string) => {
+    setIsFetchingProperties(true);
     try {
-      await contract.methods.transferOwnership(propertyId, newOwner).send({ from: account });
-      await fetchProperties();
+      await propertyRegistryContract.methods.transferOwnership(propertyId, newOwnerWalletAddress).send({ from: currentOwnerWalletAddress });
+      await loadPropertiesFromContract();
     } catch (error) {
-      console.error("Failed to transfer ownership:", error);
+      console.error("Failed to change property ownership:", error);
     }
-    setIsLoading(false);
+    setIsFetchingProperties(false);
   };
 
-  return { properties, submitListing, transferOwnership, isLoading };
+  return { propertyList, addPropertyListing, changePropertyOwnership, isFetchingProperties };
 }
