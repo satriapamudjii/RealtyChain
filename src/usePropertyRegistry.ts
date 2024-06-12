@@ -18,6 +18,7 @@ export function usePropertyRegistry() {
   const [web3Instance, setWeb3Instance] = useState<Web3 | null>(null);
   const [propertyRegistryContract, setPropertyRegistryContract] = useState<any>(null);
   const [isFetchingProperties, setIsFetchingProperties] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -27,6 +28,7 @@ export function usePropertyRegistry() {
       setPropertyRegistryContract(contractInstance);
     } catch (error) {
       console.error("Web3 Initialization Error:", error);
+      setError("Failed to initialize Web3.");
     }
   }, []);
 
@@ -36,8 +38,11 @@ export function usePropertyRegistry() {
     }
   }, [web3Instance, propertyRegistryContract]);
 
+  const clearError = () => setError(null);
+
   const loadPropertiesFromContract = async () => {
     setIsFetchingProperties(true);
+    clearError();
     try {
       const totalProperties = await propertyRegistryContract.methods.getPropertiesCount().call();
       const properties: Property[] = [];
@@ -54,32 +59,37 @@ export function usePropertyRegistry() {
       setPropertyList(properties);
     } catch (error) {
       console.error("Failed to load properties:", error);
+      setError("Failed to load properties from the blockchain.");
     }
     setIsFetchingProperties(false);
   };
 
   const addPropertyListing = async (propertyLocation: string, requestedPrice: string, userWalletAddress: string) => {
     setIsFetchingProperties(true);
+    clearError();
     try {
       const priceInWei = web3Instance.utils.toWei(requestedPrice, 'ether');
-      await propertyRegistryContract.methods.submitListing(propertyLocation, priceInWei).send({ from: userWalletId });
+      await propertyRegistryContract.methods.submitListing(propertyLocation, priceInWei).send({ from: userWalletAddress });
       await loadPropertiesFromContract();
     } catch (error) {
       console.error("Failed to add property listing:", error);
+      setError("Failed to add the property listing.");
     }
     setIsFetchingProperties(false);
   };
 
   const changePropertyOwnership = async (propertyId: string, newOwnerWalletAddress: string, currentOwnerWalletAddress: string) => {
     setIsFetchingProperties(true);
+    clearError();
     try {
       await propertyRegistryContract.methods.transferOwnership(propertyId, newOwnerWalletAddress).send({ from: currentOwnerWalletAddress });
       await loadPropertiesFromContract();
     } catch (error) {
       console.error("Failed to change property ownership:", error);
+      setError("Failed to change the property ownership.");
     }
     setIsFetchingProperties(false);
   };
 
-  return { propertyList, addPropertyListing, changePropertyOwnership, isFetchingProperties };
+  return { propertyList, addPropertyListing, changePropertyOwnership, isFetchingProperties, error };
 }
