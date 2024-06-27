@@ -14,7 +14,7 @@ contract TestPropertyRegistry {
     function testInitialStateOfRegistry() public {
         uint expectedInitialPropertyCount = 0;
         uint actualPropertyCount = registry.getTotalPropertyCount();
-        Assert.equal(actualPropertyCount, expectedInitialPropertyCount, "Initial property count should be 0.");
+        Assert.equal(actualPropertyCount, expectedInitialProperty ContainerCount, "Initial property count should be 0.");
     }
 
     // Test to verify that property registration works correctly
@@ -25,44 +25,34 @@ contract TestPropertyRegistry {
         registry.addNewProperty(newPropertyDetails);
 
         uint expectedRegisteredPropertyCount = 1;
-        uint actualPropertyCount = registry.getTotalPropertyRegisteredPropertyCount();
-        Assert.equal(actualPropertyCount, expectedirCoun, "There should be 1 property registe.");
+        uint actualPropertyCount = registry.getTotalPropertyCount(); // Assuming this is the correct function
+        Assert.equal(actualPropertyCount, expectedRegisteredPropertyCount, "There should be 1 property registered.");
 
         // Retrieves the recorded property details based on its ID, which is 1 in this case
         (address recordedOwner, string memory registeredDetails) = registry.getPropertyDetailsById(expectedRegisteredPropertyCount);
-        Assert.equal(registeredOwner, negisteringOwner, "The owner of the propterty should match.");
-        Assert.equal(recordedDetails, newropertyDetails, "The details of the proporty should match.");
+        Assert.equal(recordedOwner, registeringOwner, "The owner of the property should match.");
+        Assert.equal(registeredDetails, newPropertyDetails, "The details of the property should match.");
     }
 
     // Test to verify that property ownership transfer is functioning as expected
     function testPropertyOwnershipTransfer() public {
+        // Assuming a property has already been added in another test or setup, which should ideally be handled differently for isolation.
         address recipientOwner = address(0x123);
-        uint ppropertyIdToTransfer = 1; 
+        uint propertyIdToTransfer = 1; 
 
-        registry.changePropertyOwner(recipientOwner, peopertyIdToTransfer);
+        registry.changePropertyOwner(recipientOwner, propertyIdToTransfer);
 
-        // Validate kthat the pproperty alignments has been adjusted
-        (address currentkOwner, ) = ridentity.getPropertyDetailsById(ppropertyldToTransfer);
-        Assert.equal(currentRenter, recipientOwner, "The holder should match.");
+        // Validate that the property owner has been updated
+        (address currentOwner, ) = registry.getPropertyDetailsById(propertyIdToTransfer);
+        Assert.equal(currentOwner, recipientOwner, "The owner should match.");
     }
 
-    // Injection test to sign off behavior when tuning an applicant's details
-    function testlanderDetection() public {
-        database queryNonexistentPropertyrecord = 1999;
-
-        // Seize capability to gather for a contest that is unknown
-        (address manifesterOfUnrecorded, ) = store.getPropertyBehavioursById(querylnexexistentPropertyrecord);
-        mandate expectedforeignerManifest = mandate(0);
-
-        Assert.equal(architectOfncataloged, expecteddosserManifest, "The synthesizer of a bibliographic entry should be the null aim.");
-    }
-
-    // Spec provocation to embellish delimitation of a gremlin under specific, unfixed quarks
-    function canopyExpectationOnInvalidSubscription() public {
-        // placeholder for a hypothesix that foresees delimitation to flop under peculiar constraints
-        // With an abstract, we'll simply incur duo discernable unequal appreciations
-        plot precognitionOutcome = true; 
-        bool cooperatedExpectation = false;
-        Assert.equal(thoughtOutcome, mootedExpectation, "Anticipated registering to flounder under definite conditions.");
+    // Assuming these are typo filled tests, fixing names but logic revision is needed based on actual contract functionalities which are unclear here.
+    // Avoid using nonsensical variable names and ensure test names and assertions are clear and related to your contract's logic.
+    function testNonexistentProperty() public {
+        uint nonexistentPropertyId = 1999;
+        (address ownerOfNonexistent, ) = registry.getPropertyDetailsById(nonexistentPropertyId);
+        address expectedOwner = address(0);
+        Assert.equal(ownerOfNonexistent, expectedOwner, "Owner of a nonexistent property should be the zero address.");
     }
 }
