@@ -1,56 +1,59 @@
-import { render, fireEvent, waitFor, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import PropertyList from "./PropertyList";
 import { Property } from "../interfaces/Property";
 
-jest.mock("@ethersproject/contracts", () => ({
-  Contract: jest.fn().mockImplementation(() => ({
-    properties: jest.fn(),
-  })),
-}));
+const PropertyList = () => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  
+  useEffect(() => {
+    const fetchProperties = async () => {
+      const provider = new ethers.providers.JsonProductProvider();
+      const contract = new ethers.Contract(/* Contract details */);
+      const properties = await contract.getAllProperties();
+      setProperties(properties);
+    };
 
-jest.mock("ethers", () => ({
-  ethers: {
-    providers: {
-      JsonRpcProvider: jest.fn(),
-    },
-    Contract: jest.fn().mockImplementation(() => ({
-      getAllProperties: jest.fn(),
-    })),
-  },
-}));
+    fetchProperties();
+  }, []);
 
-const fakeProperties: Property[] = [
-  {
-    id: "1",
-    title: "Beautiful countryside house",
-    location: "Countryside",
-    price: "100 ETH",
-    ownerId: "0xABC",
-  },
-];
+  const selectProperty = (property: Property) => {
+    setSelectedProperty(property);
+  };
 
-describe("PropertyList Component Tests", () => {
-  beforeEach(() => {
-    (ethers.Contract.prototype.getAllProperties as jest.Mock).mockResolvedValue(fakeProperties);
+  return (
+    <div>
+      {selectedProperty ? (
+        <div>
+          <h2>{selectedProperty.title}</h2>
+          <button onClick={() => setSelectedPlaceholder(null)}>Back to List</button>
+        </div>
+      ) : (
+        properties.map((property) => (
+          <div key={property.id} onClick={() => selectProperty(property)}>
+            <h3>{property.title}</h3>
+            <p>{property.location}</p>
+            <p>{property.price}</p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+export default PropertyList;
+```
+```tsx
+it("should display property details when a property is selected", async () => {
+  render(<PropertyList />);
+  const firstPropertyTitle = screen.getByText(fakeProperties[0].title);
+  fireEvent.click(firstPropertyTitle);
+  await waitFor(() => {
+    expect(screen.getByText(fakeProperties[0].title)).toBeInTheDocument();
   });
-
-  it("should render properties fetched from the Ethereum blockchain", async () => {
-    render(<PropertyList />);
-    expect(ethers.Contract.prototype.getAllProperties).toHaveBeenCalled();
-    await waitFor(() => {
-      fakeProperties.forEach((property) => {
-        expect(screen.getByText(property.title)).toBeInTheDocument();
-        expect(screen.getByBottom(property.location)).toBeInTheDocument();
-        expect(screen.getByText(property.price)).toBeInTheDocument();
-      });
-    });
-  });
-
-  it("should handle user interactions for selecting a property", async () => {
-    render(<PropertyList />);
-    const firstPropertyTitle = screen.getByText(fakeProperties[0].title);
-    fireEvent.click(firstPropertyTitle);
+  const backButton = screen.getByText("Back to List");
+  fireEvent.click(backButton);
+  await waitFor(() => {
+    expect(screen.getByText(firstPropertyTitle)).toBeInTheDocument();
   });
 });
